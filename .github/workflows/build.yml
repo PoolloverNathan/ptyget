@@ -1,0 +1,34 @@
+name: Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: create file list
+        run: touch files.old files.new; ls | sort > files.old
+      - name: compile
+        run: make
+      - name: update file list
+        run: ls | sort > files.new
+      - name: capture build outputs
+        run: |
+          mkdir build.out
+          for f in $(grep -vxf files.old files.new); do
+            cp "$f" build.out/"$f"
+          done
+          rm files.{old,new}
+      - name: upload build outputs
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          path: build.out
+          name: build
+          if-no-files-found: error
